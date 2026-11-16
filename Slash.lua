@@ -12,6 +12,7 @@ local function Help()
 	print("  /ff samples <n>  - days of price data needed before flagging an item")
 	print("  /ff duration 12|24|48  - relist duration used for the deposit")
 	print("  /ff maxinvest <gold>  - most you'd spend on one flip (0 = no limit)")
+	print("  /ff vendormin <gold>  - minimum profit for the Below vendor tab (e.g. /ff vendormin 0.2)")
 	print("  /ff gaps on|off  - also flag price gaps for items with no history (riskier)")
 	print("  /ff watch add <item link or ID> | remove <link or ID> | list | clear")
 	print("  /ff snipe  - search your watchlist now (auction house must be open)")
@@ -27,6 +28,7 @@ local function ShowSettings()
 	print(string.format("  History used: %d days   Min data days: %d   Relist: %dh   Max invest: %s   Price gaps: %s",
 		s.historyDays, s.minSamples, ({ 12, 24, 48 })[s.duration] or 24,
 		s.maxInvest > 0 and ns.Money(s.maxInvest) or "no limit", s.allowNoHistory and "on" or "off"))
+	print("  Below vendor min profit: " .. ns.Money(s.vendorMinProfit))
 	local hasAtr = Auctionator and Auctionator.API and Auctionator.API.v1 and "found" or "not found (using FlipFinder's own history)"
 	print("  Auctionator: " .. hasAtr)
 end
@@ -122,6 +124,10 @@ local function Slash(msg)
 		local n = Number(rest, "gold"); if not n then return end
 		s.maxInvest = math.floor(n * 10000)
 		ns.Print(n > 0 and ("Max spend per flip: " .. ns.Money(s.maxInvest)) or "No spending limit per flip.")
+	elseif cmd == "vendormin" then
+		local n = Number(rest, "gold"); if not n then return end
+		s.vendorMinProfit = math.floor(n * 10000)
+		ns.Print("Minimum profit for below-vendor buys set to " .. ns.Money(s.vendorMinProfit) .. ".")
 	elseif cmd == "gaps" then
 		s.allowNoHistory = rest:lower() == "on"
 		ns.Print("Price gaps without history: " .. (s.allowNoHistory and "on" or "off"))

@@ -12,9 +12,16 @@ ns.defaults = {
 	maxInvest      = 0,          -- copper; 0 = no cap on the cost of one flip
 	allowNoHistory = false,      -- also flag price gaps for items with no history
 	shown          = true,       -- show the panel next to the auction house
+	vendorMinProfit = 20 * 100,  -- copper (20s): minimum profit for a below-vendor buy
+	tab            = 1,          -- 1 = Flips, 2 = Below vendor
+	sortFlipsKey   = "profit",
+	sortFlipsDesc  = true,
+	sortVendorKey  = "profit",
+	sortVendorDesc = true,
 }
 
-ns.flips = {}      -- key -> flip entry (this session)
+ns.lists = { flips = {}, vendor = {} } -- key -> entry (this session)
+ns.flips = ns.lists.flips
 ns.snapshots = {}  -- key -> Auctionator price snapshot (this session)
 
 local function CopyDefaults(dst, src)

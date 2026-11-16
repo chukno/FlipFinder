@@ -44,7 +44,10 @@ Then in game: on the character select screen click **AddOns** and make sure
 4. Hover a row for details. **Click it** to open that item's buy page, then
    buy by hand and relist at the Sell price.
 
-Rows marked `?` with a profit ending in `/u` are *possible* flips from the
+Click a column header to sort by it (for example **%** to sort by profit
+percentage); click it again to reverse the order.
+
+Rows marked `?` with a profit ending in `/ea` are *possible* flips from the
 search list, where only the cheapest price is known. Click one to load the
 full listings and get the real numbers (it then either becomes a full row or
 disappears).
@@ -61,6 +64,14 @@ disappears).
   *didn't* buy, and never above the market price.
 - A flip is shown only if profit clears **both** the minimum gold and the
   minimum percentage. Items with stale or no history are skipped.
+
+### Below vendor tab
+
+The **Below vendor** tab lists auctions priced under what a merchant pays for
+the item. Buy them and sell them to any vendor: no AH cut, no deposit and no
+waiting for a buyer, so no price history is needed and they're marked
+**Safe**. Set the minimum profit for this tab with `/ff vendormin`
+(default 20 silver).
 
 ### Watchlist ("snipe")
 
@@ -94,6 +105,7 @@ of items you flipped show their profit. Type `/ff sales` to see the log.
 | `/ff samples 1` | Days of price data needed (raise to 2–3 to be safer) | 1 |
 | `/ff duration 24` | Relist duration used for the deposit (12/24/48) | 24 |
 | `/ff maxinvest 0` | Most you'd spend on one flip, in gold (0 = no limit) | 0 |
+| `/ff vendormin 0.2` | Minimum profit for the Below vendor tab, in gold | 20s |
 | `/ff gaps on` | Also flag big price gaps on items with no history (riskier) | off |
 | `/ff watch add/remove/list/clear` | Manage the watchlist | |
 | `/ff snipe` | Search the watchlist | |

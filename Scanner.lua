@@ -35,23 +35,36 @@ local function BuildInfo(itemKey, isCommodity, link)
 	}
 end
 
-local function Store(info, flip)
+-- listName: "flips" or "vendor"
+local function Store(listName, info, flip)
+	local list = ns.lists[listName]
 	if flip then
 		for k, v in pairs(info) do flip[k] = v end
 		flip.time = GetTime()
-		-- A quick browse-only guess never replaces a fully checked flip.
-		local old = ns.flips[info.key]
+		-- A quick browse-only guess never replaces a fully checked entry.
+		local old = list[info.key]
 		if flip.isCheck and old and not old.isCheck then return end
-		ns.flips[info.key] = flip
+		list[info.key] = flip
 	end
 	ns.RefreshUI()
 end
 
-local function Remove(key)
-	if ns.flips[key] then
-		ns.flips[key] = nil
+local function Remove(listName, key, onlyChecks)
+	local list = ns.lists[listName]
+	local old = list[key]
+	if old and (not onlyChecks or old.isCheck) then
+		list[key] = nil
 		ns.RefreshUI()
 	end
+end
+
+-- Judge full listings for both lists, then record today's lowest price.
+local function Judge(info, listings)
+	local flip = ns.Evaluate(info, listings)
+	if flip then Store("flips", info, flip) else Remove("flips", info.key) end
+	local vend = ns.EvaluateVendor(info, listings)
+	if vend then Store("vendor", info, vend) else Remove("vendor", info.key) end
+	ns.RecordPrice(info.key, listings[1].unit)
 end
 
 ------------------------------------------------------------------------
@@ -75,11 +88,7 @@ local function OnCommodityResults(itemID)
 	table.sort(listings, function(a, b) return a.unit < b.unit end)
 
 	local itemKey = C_AuctionHouse.MakeItemKey(itemID)
-	local info = BuildInfo(itemKey, true)
-	-- Judge first (against earlier days), then record today's lowest price.
-	local flip = ns.Evaluate(info, listings)
-	ns.RecordPrice(info.key, listings[1].unit)
-	if flip then Store(info, flip) else Remove(info.key) end
+	Judge(BuildInfo(itemKey, true), listings)
 end
 
 ------------------------------------------------------------------------
@@ -101,10 +110,7 @@ local function OnItemResults(itemKey)
 	if #listings == 0 then return end
 	table.sort(listings, function(a, b) return a.unit < b.unit end)
 
-	local info = BuildInfo(itemKey, false, link)
-	local flip = ns.Evaluate(info, listings)
-	ns.RecordPrice(info.key, listings[1].unit)
-	if flip then Store(info, flip) else Remove(info.key) end
+	Judge(BuildInfo(itemKey, false, link), listings)
 end
 
 ------------------------------------------------------------------------
@@ -121,12 +127,10 @@ local function HandleBrowseResult(r)
 		return
 	end
 	local flip = ns.EvaluateBrowse(info, r.minPrice, r.totalQuantity)
+	if flip then Store("flips", info, flip) else Remove("flips", info.key, true) end
+	local vend = ns.EvaluateVendorBrowse(info, r.minPrice, r.totalQuantity)
+	if vend then Store("vendor", info, vend) else Remove("vendor", info.key, true) end
 	ns.RecordPrice(info.key, r.minPrice)
-	if flip then
-		Store(info, flip)
-	elseif ns.flips[info.key] and ns.flips[info.key].isCheck then
-		Remove(info.key)
-	end
 end
 
 local function OnBrowseUpdated()
@@ -174,7 +178,7 @@ function ns.OpenFlip(flip)
 		ns.Print("Open the auction house first.")
 		return
 	end
-	ns.TrackFlip(flip)
+	if not flip.isVendor then ns.TrackFlip(flip) end
 	local ok = false
 	if ah.SelectBrowseResult and ItemKeyInfo(flip.itemKey) then
 		ok = pcall(ah.SelectBrowseResult, ah, { itemKey = flip.itemKey, minPrice = flip.buyMin or 0 })

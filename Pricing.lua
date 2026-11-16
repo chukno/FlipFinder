@@ -214,3 +214,48 @@ function ns.EvaluateBrowse(info, minPrice, totalQuantity)
 		samples = samples or 0, source = source, conf = Confidence(0, true), isCheck = true,
 	}
 end
+
+------------------------------------------------------------------------
+-- Below vendor price: buy from the AH and sell to any merchant.
+-- No AH cut, no deposit, no price history needed.
+------------------------------------------------------------------------
+function ns.VendorPrice(itemID, link)
+	local p = link and select(11, ns.GetItemInfoCompat(link)) or nil
+	if not p or p == 0 then
+		p = select(11, ns.GetItemInfoCompat(itemID))
+	end
+	return p or 0
+end
+
+function ns.EvaluateVendor(info, listings)
+	local vendor = ns.VendorPrice(info.itemID, info.link)
+	if vendor <= 0 or #listings == 0 then return nil end
+	local qty, cost, buyMax = 0, 0, nil
+	for _, l in ipairs(listings) do
+		if l.unit >= vendor then break end
+		qty = qty + l.qty
+		cost = cost + l.unit * l.qty
+		buyMax = l.unit
+	end
+	if qty == 0 then return nil end
+	local profit = vendor * qty - cost
+	if profit < ns.s.vendorMinProfit then return nil end
+	return {
+		qty = qty, cost = cost, buyMax = buyMax, buyMin = listings[1].unit,
+		buyAvg = math.floor(cost / qty), sell = vendor, profit = profit,
+		pct = profit / cost * 100, conf = "Safe", isVendor = true, source = "vendor price",
+	}
+end
+
+function ns.EvaluateVendorBrowse(info, minPrice, totalQuantity)
+	local vendor = ns.VendorPrice(info.itemID, info.link)
+	if vendor <= 0 or minPrice >= vendor then return nil end
+	local unitProfit = vendor - minPrice
+	local bound = unitProfit * (info.isCommodity and math.max(totalQuantity or 1, 1) or 1)
+	if bound < ns.s.vendorMinProfit then return nil end
+	return {
+		qty = nil, cost = minPrice, buyMax = minPrice, buyMin = minPrice, buyAvg = minPrice,
+		sell = vendor, profit = unitProfit, pct = unitProfit / minPrice * 100,
+		conf = "?", isVendor = true, isCheck = true, source = "vendor price",
+	}
+end
