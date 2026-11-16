@@ -1,0 +1,15 @@
+## Interface: 16001
+## Title: FlipFinder
+## Notes: Suggests auction house flips: listings priced well below their usual market price. Read-only; you buy by hand.
+## Author: chukno
+## Version: 0.1.0
+## OptionalDeps: Auctionator
+## SavedVariables: FlipFinderDB
+## Category: Auctions
+
+Core.lua
+Pricing.lua
+Scanner.lua
+Sales.lua
+UI.lua
+Slash.lua
